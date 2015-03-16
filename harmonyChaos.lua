@@ -1,19 +1,22 @@
---draft one, just declares two pages with different color backgrounds.  
---I don't have my device right now so this hasn't been tested yet.
+--basic structure declares two pages with different color backgrounds.  
 
 FreeAllRegions()
 
 r = nil
-local currentpage
+local currentpage = 0
+lastTime = Time()
 --page 1 is harmony, page 2 is chaos
 function SwitchPage(self)
-    if currentpage == 2 then
-        currentpage = 1
-        SetPage(currentpage)     
-    else
-        currentpage = 2
-        SetPage(currentpage)
-    end       
+	if Time() > (lastTime + 1) then
+		if currentpage == 2 then
+			currentpage = 1
+			SetPage(currentpage)
+		else
+			currentpage = 2
+			SetPage(currentpage)
+		end 
+		lastTime = Time()
+	end
 end
 
 SetPage(1)
@@ -21,6 +24,7 @@ currentpage = 1
 --harmony
 r1 = Region()
 r1.t = r1:Texture(0,128,255,255) --sky blue
+r1:EnableHorizontalScroll(true)
 r1:Handle("OnHorizontalScroll", SwitchPage)
 r1:Show()
 r1:EnableInput(true)
@@ -35,6 +39,7 @@ currentpage = 2
 --chaos
 r2 = Region()
 r2.t = r2:Texture(32,32,32,255) --dark gray
+r2:EnableHorizontalScroll(true)
 r2:Handle("OnHorizontalScroll", SwitchPage)
 r2:Show()
 r2:EnableInput(true)
