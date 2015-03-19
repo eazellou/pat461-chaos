@@ -9,7 +9,7 @@ lastTime = Time()
 --page 1 is harmony, page 2 is chaos
 function SwitchPage(self,xSpeed)
     if Time() > (lastTime + 1) then
-        DPrint(xSpeed)
+        --DPrint(xSpeed)
         if math.abs(xSpeed) > 6 then
             if currentpage == 2 then
                 if xSpeed > 0 then
