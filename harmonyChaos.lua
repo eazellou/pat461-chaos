@@ -22,6 +22,7 @@ end
 
 SetPage(1)
 currentpage = 1
+
 --harmony
 r1 = Region()
 r1.t = r1:Texture(32,32,32,255)
@@ -34,6 +35,9 @@ r1:SetHeight(ScreenHeight())
 r1:SetAnchor("BOTTOMLEFT",0,0)
 r1:SetLayer("BACKGROUND")
 
+halfWidth = ScreenWidth() / 2
+halfHeight = ScreenHeight() / 2
+
 smallHeight = ScreenHeight()/3 - 8
 if smallHeight > ScreenWidth()/2 then
     smallHeight = ScreenWidth()/2
@@ -44,6 +48,7 @@ if bigHeight > ScreenWidth()/2 then
     bigHeight = ScreenWidth()/2
 end
 bigRadius = bigHeight/2
+smRad = smallHeight/2
 
 dot1 = Region()
 dot1.t = dot1:Texture(DocumentPath("Dot.png"))
@@ -51,6 +56,16 @@ dot1:Show()
 dot1.t:SetBlendMode("ALPHAKEY")
 dot1:SetHeight(smallHeight)
 dot1:SetWidth(dot1:Height())
+dot1:SetAnchor("CENTER", smRad, halfHeight - smallHeight - 12)
+
+time1 = Region()
+time1.t = time1:Texture(DocumentPath("darkdot.png"))
+time1:Show()
+time1.t:SetBlendMode("ALPHAKEY")
+time1:SetHeight(0)
+time1:SetWidth(0)
+time1:SetAnchor("CENTER",dot1,"CENTER")
+time1:SetParent(dot1)
 
 dot2 = Region()
 dot2.t = dot2:Texture(DocumentPath("Dot.png"))
@@ -58,7 +73,16 @@ dot2:Show()
 dot2.t:SetBlendMode("ALPHAKEY")
 dot2:SetHeight(smallHeight)
 dot2:SetWidth(dot2:Height())
-dot2:SetAnchor("BOTTOMLEFT", 0, dot1:Height() + 12)
+dot2:SetAnchor("CENTER", smRad, halfHeight)
+
+time2 = Region()
+time2.t = time2:Texture(DocumentPath("darkdot.png"))
+time2:Show()
+time2.t:SetBlendMode("ALPHAKEY")
+time2:SetHeight(0)
+time2:SetWidth(0)
+time2:SetAnchor("CENTER",dot2,"CENTER")
+time2:SetParent(dot2)
 
 dot3 = Region()
 dot3.t = dot3:Texture(DocumentPath("Dot.png"))
@@ -66,7 +90,16 @@ dot3:Show()
 dot3.t:SetBlendMode("ALPHAKEY")
 dot3:SetHeight(smallHeight)
 dot3:SetWidth(dot3:Height())
-dot3:SetAnchor("BOTTOMLEFT", 0, dot1:Height() + dot2:Height() + 24)
+dot3:SetAnchor("CENTER", smRad, halfHeight + smallHeight + 12)
+
+time3 = Region()
+time3.t = time3:Texture(DocumentPath("darkdot.png"))
+time3:Show()
+time3.t:SetBlendMode("ALPHAKEY")
+time3:SetHeight(0)
+time3:SetWidth(0)
+time3:SetAnchor("CENTER",dot3,"CENTER")
+time3:SetParent(dot3)
 
 dot5 = Region()
 dot5.t = dot5:Texture(DocumentPath("Dot.png"))
@@ -76,6 +109,15 @@ dot5:SetHeight(bigHeight)
 dot5:SetWidth(dot5:Height())
 dot5:SetAnchor("CENTER", ScreenWidth() - bigRadius, ScreenHeight()/2 - bigRadius - 6)
 
+time5 = Region()
+time5.t = time5:Texture(DocumentPath("darkdot.png"))
+time5:Show()
+time5.t:SetBlendMode("ALPHAKEY")
+time5:SetHeight(0)
+time5:SetWidth(0)
+time5:SetAnchor("CENTER",dot5,"CENTER")
+time5:SetParent(dot5)
+
 dot6 = Region()
 dot6.t = dot6:Texture(DocumentPath("Dot.png"))
 dot6:Show() 
@@ -84,9 +126,56 @@ dot6:SetHeight(bigHeight)
 dot6:SetWidth(dot6:Height())
 dot6:SetAnchor("CENTER", ScreenWidth() - bigRadius, ScreenHeight()/2 + bigRadius + 6)
 
+time6 = Region()
+time6.t = time6:Texture(DocumentPath("darkdot.png"))
+time6:Show()
+time6.t:SetBlendMode("ALPHAKEY")
+time6:SetHeight(0)
+time6:SetWidth(0)
+time6:SetAnchor("CENTER",dot6,"CENTER")
+time6:SetParent(dot6)
 
-halfWidth = ScreenWidth() / 2
-halfHeight = ScreenHeight() / 2
+function shrinkme(self, elapsed)
+    local width = self:Width()
+    local height = self:Height()
+    width = width - elapsed * self.shrinkspeed
+    height = height - elapsed *self.shrinkspeed
+    if width <= 0 or height <= 0 then
+        self:SetWidth(0)
+        self:SetHeight(0)
+        self:Handle("OnUpdate", nil)
+        dad = self:Parent()
+        dad:EnableInput(true)
+        dad:Handle("OnTouchDown",timerShrink)
+    else
+        self:SetWidth(width)
+        self:SetHeight(height)
+    end
+end
+
+function timerShrink(this)
+    kid = this:Children()
+    kid:SetHeight(this:Height())
+    kid:SetWidth(this:Width())
+    kid.shrinkspeed = 50
+    this:EnableInput(false)
+    kid:Handle("OnUpdate",shrinkme)
+end
+
+dot1:EnableInput(true)
+dot2:EnableInput(true)
+dot3:EnableInput(true)
+dot5:EnableInput(true)
+dot6:EnableInput(true)
+
+dot1:Handle("OnTouchDown", timerShrink)
+dot2:Handle("OnTouchDown", timerShrink)
+dot3:Handle("OnTouchDown", timerShrink)
+dot5:Handle("OnTouchDown", timerShrink)
+dot6:Handle("OnTouchDown", timerShrink)
+
+
+
 --**modification starts here
 barwidth = 300
 currwidth = 0
@@ -183,4 +272,4 @@ middleCircle:SetWidth(50)
 middleCircle:SetHeight(50)
 middleCircle:SetAnchor("TOP", halfWidth, halfHeight)
 
-SetPage(1)
+--SetPage(1)
