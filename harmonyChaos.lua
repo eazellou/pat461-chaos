@@ -157,7 +157,7 @@ function timerShrink(this)
     kid = this:Children()
     kid:SetHeight(this:Height())
     kid:SetWidth(this:Width())
-    kid.shrinkspeed = 50
+    kid.shrinkspeed = 20
     this:EnableInput(false)
     kid:Handle("OnUpdate",shrinkme)
 end
@@ -272,4 +272,4 @@ middleCircle:SetWidth(50)
 middleCircle:SetHeight(50)
 middleCircle:SetAnchor("TOP", halfWidth, halfHeight)
 
---SetPage(1)
+SetPage(1)
