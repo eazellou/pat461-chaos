@@ -7,16 +7,23 @@ r = nil
 local currentpage = 0
 lastTime = Time()
 --page 1 is harmony, page 2 is chaos
-function SwitchPage(self)
+function SwitchPage(self,xSpeed)
     if Time() > (lastTime + 1) then
-        if currentpage == 2 then
-            currentpage = 1
-            SetPage(currentpage)
-        else
-            currentpage = 2
-            SetPage(currentpage)
+        DPrint(xSpeed)
+        if math.abs(xSpeed) > 6 then
+            if currentpage == 2 then
+                if xSpeed > 0 then
+                    currentpage = 1
+                    SetPage(currentpage)
+                end
+            else
+                if xSpeed < 0 then
+                    currentpage = 2
+                    SetPage(currentpage)
+                end
+            end
+            lastTime = Time()
         end
-        lastTime = Time()
     end
 end
 
