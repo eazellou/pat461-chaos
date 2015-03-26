@@ -61,7 +61,7 @@ smRad = smallHeight/2
 dot1 = Region()
 dot1.t = dot1:Texture(DocumentPath("Dot.png"))
 dot1:Show() 
-dot1.id = 0
+dot1.id = 1
 dot1.t:SetBlendMode("ALPHAKEY")
 dot1:SetHeight(smallHeight)
 dot1:SetWidth(dot1:Height())
@@ -79,7 +79,7 @@ time1:SetParent(dot1)
 dot2 = Region()
 dot2.t = dot2:Texture(DocumentPath("Dot.png"))
 dot2:Show() 
-dot2.id = 1
+dot2.id = 2
 dot2.t:SetBlendMode("ALPHAKEY")
 dot2:SetHeight(smallHeight)
 dot2:SetWidth(dot2:Height())
@@ -97,7 +97,7 @@ time2:SetParent(dot2)
 dot3 = Region()
 dot3.t = dot3:Texture(DocumentPath("Dot.png"))
 dot3:Show() 
-dot3.id = 2
+dot3.id = 3
 dot3.t:SetBlendMode("ALPHAKEY")
 dot3:SetHeight(smallHeight)
 dot3:SetWidth(dot3:Height())
@@ -115,7 +115,7 @@ time3:SetParent(dot3)
 dot5 = Region()
 dot5.t = dot5:Texture(DocumentPath("Dot.png"))
 dot5:Show() 
-dot5.id = 3
+dot5.id = 4
 dot5.t:SetBlendMode("ALPHAKEY")
 dot5:SetHeight(bigHeight)
 dot5:SetWidth(dot5:Height())
@@ -133,7 +133,7 @@ time5:SetParent(dot5)
 dot6 = Region()
 dot6.t = dot6:Texture(DocumentPath("Dot.png"))
 dot6:Show() 
-dot6.id = 4
+dot6.id = 5
 dot6.t:SetBlendMode("ALPHAKEY")
 dot6:SetHeight(bigHeight)
 dot6:SetWidth(dot6:Height())
@@ -167,9 +167,8 @@ function shrinkme(self, elapsed)
 end
 
 function timerShrink(this)
-    --sample.Sample = this.id
-    --sample.Rate = 1
-    dac.In:SetPull(sample.Out)
+    
+    pushStarts[this.id]:Push(-1)
     kid = this:Children()
     kid:SetHeight(this:Height())
     kid:SetWidth(this:Width())
@@ -179,16 +178,40 @@ function timerShrink(this)
 end
 
 
-    sample = FlowBox(FBSample)
+    pushStarts = {}
+    samplers = {}
+    pushLoop = {}
+    pushSample = {}
     dac = FBDac
 
-    sample:AddFile("AbMono.wav") --0
-    sample:AddFile("Ab10Mono.wav") --1
-    sample:AddFile("BbMono.wav") --2
-    sample:AddFile("CMono.wav") --3
-    sample:AddFile("G10Mono.wav") --4
+    for j = 1,5 do
+        samplers[j] = FlowBox(FBSample)
+    end
+
+    samplers[1]:AddFile(DocumentPath("AbMono.wav")) 
+    samplers[2]:AddFile(DocumentPath("BbMono.wav")) 
+    samplers[3]:AddFile(DocumentPath("CMono.wav")) 
+    samplers[4]:AddFile(DocumentPath("Ab10Mono.wav")) 
+    samplers[5]:AddFile(DocumentPath("G10Mono.wav")) 
+
+    for i = 1,5 do
+        pushStarts[i] = FlowBox(FBPush)
+        pushLoop[i] = FlowBox(FBPush)
+        pushSample[i] = FlowBox(FBPush)
+
+        pushStarts[i].Out:SetPush(samplers[i].Pos)
+        pushLoop[i].Out:SetPush(samplers[i].Loop)
+        pushSample[i].Out:SetPush(samplers[i].Sample)
+
+        pushLoop[i]:Push(0)
+        pushStarts[i]:Push(1)
+
+        dac.In:SetPull(samplers[i].Out)
+    end
+
     
-    
+
+   
 
 
 
