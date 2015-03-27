@@ -172,7 +172,7 @@ function timerShrink(this)
     kid = this:Children()
     kid:SetHeight(this:Height())
     kid:SetWidth(this:Width())
-    kid.shrinkspeed = 20
+    kid.shrinkspeed = 17
     this:EnableInput(false)
     kid:Handle("OnUpdate",shrinkme)
 end
@@ -181,6 +181,7 @@ end
     pushStarts = {}
     samplers = {}
     pushLoop = {}
+    pushAmp = {}
     pushSample = {}
     dac = FBDac
 
@@ -198,13 +199,16 @@ end
         pushStarts[i] = FlowBox(FBPush)
         pushLoop[i] = FlowBox(FBPush)
         pushSample[i] = FlowBox(FBPush)
+        pushAmp[i] = FlowBox(FBPush)
 
         pushStarts[i].Out:SetPush(samplers[i].Pos)
         pushLoop[i].Out:SetPush(samplers[i].Loop)
         pushSample[i].Out:SetPush(samplers[i].Sample)
+        pushAmp[i].Out:SetPush(samplers[i].Amp)
 
         pushLoop[i]:Push(0)
         pushStarts[i]:Push(1)
+        pushAmp[i]:Push(.5)
 
         dac.In:SetPull(samplers[i].Out)
     end
