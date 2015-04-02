@@ -5,59 +5,8 @@ FreeAllFlowboxes()
 DPrint("")
 
 r = nil
-currentpage = 0
+local currentpage = 0
 lastTime = Time()
-
-SetPage(1)
-
-smallHeight = ScreenHeight()/3 - 8
-if smallHeight > ScreenWidth()/2 then
-    smallHeight = ScreenWidth()/2
-end
-
-bigHeight = ScreenHeight()/2 - 6
-if bigHeight > ScreenWidth()/2 then
-    bigHeight = ScreenWidth()/2
-end
-bigRadius = bigHeight/2
-smRad = smallHeight/2
-
-pushStarts = {}
-samplers = {}
-pushLoop = {}
-pushAmp = {}
-pushSample = {}
-dac = FBDac
-
-for j = 1,7 do
-    samplers[j] = FlowBox(FBSample)
-end
-
-samplers[1]:AddFile(DocumentPath("AbMono.wav"))
-samplers[2]:AddFile(DocumentPath("BbMono.wav"))
-samplers[3]:AddFile(DocumentPath("CMono.wav"))
-samplers[4]:AddFile(DocumentPath("Ab10Mono.wav"))
-samplers[5]:AddFile(DocumentPath("G10Mono.wav"))
-samplers[6]:AddFile(DocumentPath("Crash.wav"))
-samplers[7]:AddFile(DocumentPath("Beeps.wav"))
-
-for i = 1,7 do
-    pushStarts[i] = FlowBox(FBPush)
-    pushLoop[i] = FlowBox(FBPush)
-    pushSample[i] = FlowBox(FBPush)
-    pushAmp[i] = FlowBox(FBPush)
-
-    pushStarts[i].Out:SetPush(samplers[i].Pos)
-    pushLoop[i].Out:SetPush(samplers[i].Loop)
-    pushSample[i].Out:SetPush(samplers[i].Sample)
-    pushAmp[i].Out:SetPush(samplers[i].Amp)
-
-    pushLoop[i]:Push(0)
-    pushStarts[i]:Push(1)
-    pushAmp[i]:Push(.5)
-
-    dac.In:SetPull(samplers[i].Out)
-end
 
 --page 1 is harmony, page 2 is chaos
 function SwitchPage(self,xSpeed)
@@ -81,33 +30,23 @@ end
 
 --harmony
 
-function shrinkme(self, elapsed)
-    local width = self:Width()
-    local height = self:Height()
-    width = width - elapsed * self.shrinkspeed
-    height = height - elapsed *self.shrinkspeed
-    if width <= 0 or height <= 0 then
-        self:SetWidth(0)
-        self:SetHeight(0)
-        self:Handle("OnUpdate", nil)
-        dad = self:Parent()
-        dad:EnableInput(true)
-        dad:Handle("OnTouchDown",timerShrink)
-    else
-        self:SetWidth(width)
-        self:SetHeight(height)
-    end
+SetPage(1)
+currentpage = 1
+
+halfWidth = ScreenWidth() / 2
+halfHeight = ScreenHeight() / 2
+
+smallHeight = ScreenHeight()/3 - 8
+if smallHeight > ScreenWidth()/2 then
+    smallHeight = ScreenWidth()/2
 end
 
-function timerShrink(this)
-    pushStarts[this.id]:Push(-1)
-    kid = this:Children()
-    kid:SetHeight(this:Height())
-    kid:SetWidth(this:Width())
-    kid.shrinkspeed = 17
-    this:EnableInput(false)
-    kid:Handle("OnUpdate",shrinkme)
+bigHeight = ScreenHeight()/2 - 6
+if bigHeight > ScreenWidth()/2 then
+    bigHeight = ScreenWidth()/2
 end
+bigRadius = bigHeight/2
+smRad = smallHeight/2
 
 r1 = Region()
 r1.t = r1:Texture(32,32,32,255)
@@ -222,6 +161,73 @@ dot3:Handle("OnTouchDown", timerShrink)
 dot5:Handle("OnTouchDown", timerShrink)
 dot6:Handle("OnTouchDown", timerShrink)
 
+-- sample stuff
+
+pushStarts = {}
+samplers = {}
+pushLoop = {}
+pushAmp = {}
+pushSample = {}
+dac = FBDac
+
+for j = 1,7 do
+    samplers[j] = FlowBox(FBSample)
+end
+
+samplers[1]:AddFile(DocumentPath("AbMono.wav"))
+samplers[2]:AddFile(DocumentPath("BbMono.wav"))
+samplers[3]:AddFile(DocumentPath("CMono.wav"))
+samplers[4]:AddFile(DocumentPath("Ab10Mono.wav"))
+samplers[5]:AddFile(DocumentPath("G10Mono.wav"))
+samplers[6]:AddFile(DocumentPath("Crash.wav"))
+samplers[7]:AddFile(DocumentPath("Beeps.wav"))
+
+for i = 1,7 do
+    pushStarts[i] = FlowBox(FBPush)
+    pushLoop[i] = FlowBox(FBPush)
+    pushSample[i] = FlowBox(FBPush)
+    pushAmp[i] = FlowBox(FBPush)
+
+    pushStarts[i].Out:SetPush(samplers[i].Pos)
+    pushLoop[i].Out:SetPush(samplers[i].Loop)
+    pushSample[i].Out:SetPush(samplers[i].Sample)
+    pushAmp[i].Out:SetPush(samplers[i].Amp)
+
+    pushLoop[i]:Push(0)
+    pushStarts[i]:Push(1)
+    pushAmp[i]:Push(.5)
+
+    dac.In:SetPull(samplers[i].Out)
+end
+
+function shrinkme(self, elapsed)
+    local width = self:Width()
+    local height = self:Height()
+    width = width - elapsed * self.shrinkspeed
+    height = height - elapsed *self.shrinkspeed
+    if width <= 0 or height <= 0 then
+        self:SetWidth(0)
+        self:SetHeight(0)
+        self:Handle("OnUpdate", nil)
+        dad = self:Parent()
+        dad:EnableInput(true)
+        dad:Handle("OnTouchDown",timerShrink)
+    else
+        self:SetWidth(width)
+        self:SetHeight(height)
+    end
+end
+
+function timerShrink(this)
+    pushStarts[this.id]:Push(-1)
+    kid = this:Children()
+    kid:SetHeight(this:Height())
+    kid:SetWidth(this:Width())
+    kid.shrinkspeed = 17
+    this:EnableInput(false)
+    kid:Handle("OnUpdate",shrinkme)
+end
+
 --chaos
 
 function increaseBar(region, x, y, z)
@@ -270,6 +276,7 @@ function chaosMovement(region, x, y, z)
 end
 
 SetPage(2)
+currentpage = 2
 
 barwidth = 300
 currwidth = 0
@@ -279,9 +286,6 @@ debouncer = 0
 initialStrength = 0
 maxStrength = 0
 MAXSTRENGTHPOSSIBLE = 0.75
-
-halfWidth = ScreenWidth() / 2
-halfHeight = ScreenHeight() / 2
 
 r2 = Region()
 r2.t = r2:Texture(0,0,0,255) --dark gray **(changed to black because the png file looks weird if it isn't)
@@ -322,3 +326,4 @@ middleCircle:SetAnchor("TOP", halfWidth, halfHeight)
 
 -- back to harmony
 SetPage(1)
+currentpage = 1
