@@ -230,6 +230,18 @@ end
 
 --chaos
 
+SetPage(2)
+currentpage = 2
+
+barwidth = 300
+currwidth = 0
+globalChangeVar = 0
+
+debouncer = 0
+initialStrength = 0
+maxStrength = 0
+MAXSTRENGTHPOSSIBLE = 0.75
+
 function increaseBar(region, x, y, z)
     if globalChangeVar <= 0.0009 and currwidth > 0 then
         currwidth = currwidth - 10
@@ -274,18 +286,6 @@ function chaosMovement(region, x, y, z)
 
     middleCircle:SetAnchor("TOP", randomWithStrength(halfWidth, changeInStrength), randomWithStrength(halfHeight, changeInStrength) + 50)
 end
-
-SetPage(2)
-currentpage = 2
-
-barwidth = 300
-currwidth = 0
-globalChangeVar = 0
-
-debouncer = 0
-initialStrength = 0
-maxStrength = 0
-MAXSTRENGTHPOSSIBLE = 0.75
 
 r2 = Region()
 r2.t = r2:Texture(0,0,0,255) --dark gray **(changed to black because the png file looks weird if it isn't)
