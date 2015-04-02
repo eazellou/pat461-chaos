@@ -5,46 +5,10 @@ FreeAllFlowboxes()
 DPrint("")
 
 r = nil
-local currentpage = 0
+currentpage = 0
 lastTime = Time()
---page 1 is harmony, page 2 is chaos
-function SwitchPage(self,xSpeed)
-    if Time() > (lastTime + 1) then
-        --DPrint(xSpeed)
-        if math.abs(xSpeed) > 6 then
-            if currentpage == 2 then
-                if xSpeed > 0 then
-                    currentpage = 1
-                    SetPage(currentpage)
-                end
-            else
-                if xSpeed < 0 then
-                    currentpage = 2
-                    SetPage(currentpage)
-                end
-            end
-            lastTime = Time()
-        end
-    end
-end
 
 SetPage(1)
-currentpage = 1
-
---harmony
-r1 = Region()
-r1.t = r1:Texture(32,32,32,255)
-r1:EnableHorizontalScroll(true)
-r1:Handle("OnHorizontalScroll", SwitchPage)
-r1:Show()
-r1:EnableInput(true)
-r1:SetWidth(ScreenWidth())
-r1:SetHeight(ScreenHeight())
-r1:SetAnchor("BOTTOMLEFT",0,0)
-r1:SetLayer("BACKGROUND")
-
-halfWidth = ScreenWidth() / 2
-halfHeight = ScreenHeight() / 2
 
 smallHeight = ScreenHeight()/3 - 8
 if smallHeight > ScreenWidth()/2 then
@@ -58,95 +22,64 @@ end
 bigRadius = bigHeight/2
 smRad = smallHeight/2
 
-dot1 = Region()
-dot1.t = dot1:Texture(DocumentPath("Dot.png"))
-dot1:Show() 
-dot1.id = 1
-dot1.t:SetBlendMode("ALPHAKEY")
-dot1:SetHeight(smallHeight)
-dot1:SetWidth(dot1:Height())
-dot1:SetAnchor("CENTER", smRad, halfHeight - smallHeight - 12)
+pushStarts = {}
+samplers = {}
+pushLoop = {}
+pushAmp = {}
+pushSample = {}
+dac = FBDac
 
-time1 = Region()
-time1.t = time1:Texture(DocumentPath("darkdot.png"))
-time1:Show()
-time1.t:SetBlendMode("ALPHAKEY")
-time1:SetHeight(0)
-time1:SetWidth(0)
-time1:SetAnchor("CENTER",dot1,"CENTER")
-time1:SetParent(dot1)
+for j = 1,7 do
+    samplers[j] = FlowBox(FBSample)
+end
 
-dot2 = Region()
-dot2.t = dot2:Texture(DocumentPath("Dot.png"))
-dot2:Show() 
-dot2.id = 2
-dot2.t:SetBlendMode("ALPHAKEY")
-dot2:SetHeight(smallHeight)
-dot2:SetWidth(dot2:Height())
-dot2:SetAnchor("CENTER", smRad, halfHeight)
+samplers[1]:AddFile(DocumentPath("AbMono.wav"))
+samplers[2]:AddFile(DocumentPath("BbMono.wav"))
+samplers[3]:AddFile(DocumentPath("CMono.wav"))
+samplers[4]:AddFile(DocumentPath("Ab10Mono.wav"))
+samplers[5]:AddFile(DocumentPath("G10Mono.wav"))
+samplers[6]:AddFile(DocumentPath("Crash.wav"))
+samplers[7]:AddFile(DocumentPath("Beeps.wav"))
 
-time2 = Region()
-time2.t = time2:Texture(DocumentPath("darkdot.png"))
-time2:Show()
-time2.t:SetBlendMode("ALPHAKEY")
-time2:SetHeight(0)
-time2:SetWidth(0)
-time2:SetAnchor("CENTER",dot2,"CENTER")
-time2:SetParent(dot2)
+for i = 1,7 do
+    pushStarts[i] = FlowBox(FBPush)
+    pushLoop[i] = FlowBox(FBPush)
+    pushSample[i] = FlowBox(FBPush)
+    pushAmp[i] = FlowBox(FBPush)
 
-dot3 = Region()
-dot3.t = dot3:Texture(DocumentPath("Dot.png"))
-dot3:Show() 
-dot3.id = 3
-dot3.t:SetBlendMode("ALPHAKEY")
-dot3:SetHeight(smallHeight)
-dot3:SetWidth(dot3:Height())
-dot3:SetAnchor("CENTER", smRad, halfHeight + smallHeight + 12)
+    pushStarts[i].Out:SetPush(samplers[i].Pos)
+    pushLoop[i].Out:SetPush(samplers[i].Loop)
+    pushSample[i].Out:SetPush(samplers[i].Sample)
+    pushAmp[i].Out:SetPush(samplers[i].Amp)
 
-time3 = Region()
-time3.t = time3:Texture(DocumentPath("darkdot.png"))
-time3:Show()
-time3.t:SetBlendMode("ALPHAKEY")
-time3:SetHeight(0)
-time3:SetWidth(0)
-time3:SetAnchor("CENTER",dot3,"CENTER")
-time3:SetParent(dot3)
+    pushLoop[i]:Push(0)
+    pushStarts[i]:Push(1)
+    pushAmp[i]:Push(.5)
 
-dot5 = Region()
-dot5.t = dot5:Texture(DocumentPath("Dot.png"))
-dot5:Show() 
-dot5.id = 4
-dot5.t:SetBlendMode("ALPHAKEY")
-dot5:SetHeight(bigHeight)
-dot5:SetWidth(dot5:Height())
-dot5:SetAnchor("CENTER", ScreenWidth() - bigRadius, ScreenHeight()/2 - bigRadius - 6)
+    dac.In:SetPull(samplers[i].Out)
+end
 
-time5 = Region()
-time5.t = time5:Texture(DocumentPath("darkdot.png"))
-time5:Show()
-time5.t:SetBlendMode("ALPHAKEY")
-time5:SetHeight(0)
-time5:SetWidth(0)
-time5:SetAnchor("CENTER",dot5,"CENTER")
-time5:SetParent(dot5)
+--page 1 is harmony, page 2 is chaos
+function SwitchPage(self,xSpeed)
+    if Time() > (lastTime + 1) then
+        if math.abs(xSpeed) > 6 then
+            if xSpeed > 0 then
+                newpage = 1
+            else
+                newpage = 2
+            end
 
-dot6 = Region()
-dot6.t = dot6:Texture(DocumentPath("Dot.png"))
-dot6:Show() 
-dot6.id = 5
-dot6.t:SetBlendMode("ALPHAKEY")
-dot6:SetHeight(bigHeight)
-dot6:SetWidth(dot6:Height())
-dot6:SetAnchor("CENTER", ScreenWidth() - bigRadius, ScreenHeight()/2 + bigRadius + 6)
+            if newpage ~= currentpage then
+                currentpage = newpage
 
-time6 = Region()
-time6.t = time6:Texture(DocumentPath("darkdot.png"))
-time6:Show()
-time6.t:SetBlendMode("ALPHAKEY")
-time6:SetHeight(0)
-time6:SetWidth(0)
-time6:SetAnchor("CENTER",dot6,"CENTER")
-time6:SetParent(dot6)
+                SetPage(currentpage)
+            end
+        end
+    end
+    lastTime = Time()
+end
+
+--harmony
 
 function shrinkme(self, elapsed)
     local width = self:Width()
@@ -167,7 +100,6 @@ function shrinkme(self, elapsed)
 end
 
 function timerShrink(this)
-    
     pushStarts[this.id]:Push(-1)
     kid = this:Children()
     kid:SetHeight(this:Height())
@@ -177,47 +109,106 @@ function timerShrink(this)
     kid:Handle("OnUpdate",shrinkme)
 end
 
+r1 = Region()
+r1.t = r1:Texture(32,32,32,255)
+r1:EnableHorizontalScroll(true)
+r1:Handle("OnHorizontalScroll", SwitchPage)
+r1:Show()
+r1:EnableInput(true)
+r1:SetWidth(ScreenWidth())
+r1:SetHeight(ScreenHeight())
+r1:SetAnchor("BOTTOMLEFT",0,0)
+r1:SetLayer("BACKGROUND")
 
-    pushStarts = {}
-    samplers = {}
-    pushLoop = {}
-    pushAmp = {}
-    pushSample = {}
-    dac = FBDac
+dot1 = Region()
+dot1.t = dot1:Texture(DocumentPath("Dot.png"))
+dot1:Show()
+dot1.id = 1
+dot1.t:SetBlendMode("ALPHAKEY")
+dot1:SetHeight(smallHeight)
+dot1:SetWidth(dot1:Height())
+dot1:SetAnchor("CENTER", smRad, halfHeight - smallHeight - 12)
 
-    for j = 1,5 do
-        samplers[j] = FlowBox(FBSample)
-    end
+time1 = Region()
+time1.t = time1:Texture(DocumentPath("darkdot.png"))
+time1:Show()
+time1.t:SetBlendMode("ALPHAKEY")
+time1:SetHeight(0)
+time1:SetWidth(0)
+time1:SetAnchor("CENTER",dot1,"CENTER")
+time1:SetParent(dot1)
 
-    samplers[1]:AddFile(DocumentPath("AbMono.wav")) 
-    samplers[2]:AddFile(DocumentPath("BbMono.wav")) 
-    samplers[3]:AddFile(DocumentPath("CMono.wav")) 
-    samplers[4]:AddFile(DocumentPath("Ab10Mono.wav")) 
-    samplers[5]:AddFile(DocumentPath("G10Mono.wav")) 
+dot2 = Region()
+dot2.t = dot2:Texture(DocumentPath("Dot.png"))
+dot2:Show()
+dot2.id = 2
+dot2.t:SetBlendMode("ALPHAKEY")
+dot2:SetHeight(smallHeight)
+dot2:SetWidth(dot2:Height())
+dot2:SetAnchor("CENTER", smRad, halfHeight)
 
-    for i = 1,5 do
-        pushStarts[i] = FlowBox(FBPush)
-        pushLoop[i] = FlowBox(FBPush)
-        pushSample[i] = FlowBox(FBPush)
-        pushAmp[i] = FlowBox(FBPush)
+time2 = Region()
+time2.t = time2:Texture(DocumentPath("darkdot.png"))
+time2:Show()
+time2.t:SetBlendMode("ALPHAKEY")
+time2:SetHeight(0)
+time2:SetWidth(0)
+time2:SetAnchor("CENTER",dot2,"CENTER")
+time2:SetParent(dot2)
 
-        pushStarts[i].Out:SetPush(samplers[i].Pos)
-        pushLoop[i].Out:SetPush(samplers[i].Loop)
-        pushSample[i].Out:SetPush(samplers[i].Sample)
-        pushAmp[i].Out:SetPush(samplers[i].Amp)
+dot3 = Region()
+dot3.t = dot3:Texture(DocumentPath("Dot.png"))
+dot3:Show()
+dot3.id = 3
+dot3.t:SetBlendMode("ALPHAKEY")
+dot3:SetHeight(smallHeight)
+dot3:SetWidth(dot3:Height())
+dot3:SetAnchor("CENTER", smRad, halfHeight + smallHeight + 12)
 
-        pushLoop[i]:Push(0)
-        pushStarts[i]:Push(1)
-        pushAmp[i]:Push(.5)
+time3 = Region()
+time3.t = time3:Texture(DocumentPath("darkdot.png"))
+time3:Show()
+time3.t:SetBlendMode("ALPHAKEY")
+time3:SetHeight(0)
+time3:SetWidth(0)
+time3:SetAnchor("CENTER",dot3,"CENTER")
+time3:SetParent(dot3)
 
-        dac.In:SetPull(samplers[i].Out)
-    end
+dot5 = Region()
+dot5.t = dot5:Texture(DocumentPath("Dot.png"))
+dot5:Show()
+dot5.id = 4
+dot5.t:SetBlendMode("ALPHAKEY")
+dot5:SetHeight(bigHeight)
+dot5:SetWidth(dot5:Height())
+dot5:SetAnchor("CENTER", ScreenWidth() - bigRadius, ScreenHeight()/2 - bigRadius - 6)
 
-    
+time5 = Region()
+time5.t = time5:Texture(DocumentPath("darkdot.png"))
+time5:Show()
+time5.t:SetBlendMode("ALPHAKEY")
+time5:SetHeight(0)
+time5:SetWidth(0)
+time5:SetAnchor("CENTER",dot5,"CENTER")
+time5:SetParent(dot5)
 
-   
+dot6 = Region()
+dot6.t = dot6:Texture(DocumentPath("Dot.png"))
+dot6:Show()
+dot6.id = 5
+dot6.t:SetBlendMode("ALPHAKEY")
+dot6:SetHeight(bigHeight)
+dot6:SetWidth(dot6:Height())
+dot6:SetAnchor("CENTER", ScreenWidth() - bigRadius, ScreenHeight()/2 + bigRadius + 6)
 
-
+time6 = Region()
+time6.t = time6:Texture(DocumentPath("darkdot.png"))
+time6:Show()
+time6.t:SetBlendMode("ALPHAKEY")
+time6:SetHeight(0)
+time6:SetWidth(0)
+time6:SetAnchor("CENTER",dot6,"CENTER")
+time6:SetParent(dot6)
 
 dot1:EnableInput(true)
 dot2:EnableInput(true)
@@ -231,12 +222,7 @@ dot3:Handle("OnTouchDown", timerShrink)
 dot5:Handle("OnTouchDown", timerShrink)
 dot6:Handle("OnTouchDown", timerShrink)
 
-
-
---**modification starts here
-barwidth = 300
-currwidth = 0
-globalChangeVar = 0
+--chaos
 
 function increaseBar(region, x, y, z)
     if globalChangeVar <= 0.0009 and currwidth > 0 then
@@ -247,7 +233,7 @@ function increaseBar(region, x, y, z)
     end
     region:SetWidth(currwidth)
 end
---ends here
+
 function accelStrength( x,y,z )
     return (math.abs(x) + math.abs(y) + math.abs(z)) / 3
 end
@@ -256,10 +242,6 @@ function randomWithStrength(widthOrHeight, strength)
     return widthOrHeight + math.random(-widthOrHeight, widthOrHeight) * (strength / MAXSTRENGTHPOSSIBLE)
 end
 
-debouncer = 0
-initialStrength = 0
-maxStrength = 0
-MAXSTRENGTHPOSSIBLE = 0.75
 function chaosMovement(region, x, y, z)
     if debouncer == 0 then
         initialStrength = accelStrength(x,y,z)
@@ -278,6 +260,7 @@ function chaosMovement(region, x, y, z)
     end
 
     if changeInStrength > MAXSTRENGTHPOSSIBLE then
+        pushStarts[math.random(6, 7)]:Push(-1)
         changeInStrength = MAXSTRENGTHPOSSIBLE
     end
     --**needed a global strength variable
@@ -287,8 +270,19 @@ function chaosMovement(region, x, y, z)
 end
 
 SetPage(2)
-currentpage = 2
---chaos
+
+barwidth = 300
+currwidth = 0
+globalChangeVar = 0
+
+debouncer = 0
+initialStrength = 0
+maxStrength = 0
+MAXSTRENGTHPOSSIBLE = 0.75
+
+halfWidth = ScreenWidth() / 2
+halfHeight = ScreenHeight() / 2
+
 r2 = Region()
 r2.t = r2:Texture(0,0,0,255) --dark gray **(changed to black because the png file looks weird if it isn't)
 r2:EnableHorizontalScroll(true)
@@ -301,7 +295,6 @@ r2:SetAnchor("BOTTOMLEFT",0,0)
 r2:SetLayer("BACKGROUND")
 r2:Handle("OnAccelerate", chaosMovement)
 
---**My modification starts here
 bar = Region()
 bar.t = bar:Texture(60,45,70,255)
 bar:SetAnchor("TOPLEFT", 10, 40)
@@ -318,8 +311,6 @@ progress:SetWidth(currwidth)
 progress:Handle("OnAccelerate", increaseBar)
 progress:Show()
 
---ends here
-
 middleCircle = Region()
 middleCircle.t = middleCircle:Texture("2000px-Disc_Plain_red.svg.png") --**changed to a png file
 --middleCircle.t = middleCircle:Texture(32,32,32,255)
@@ -329,4 +320,5 @@ middleCircle:SetWidth(50)
 middleCircle:SetHeight(50)
 middleCircle:SetAnchor("TOP", halfWidth, halfHeight)
 
+-- back to harmony
 SetPage(1)
