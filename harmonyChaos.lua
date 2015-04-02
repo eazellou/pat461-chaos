@@ -5,22 +5,21 @@ FreeAllFlowboxes()
 DPrint("")
 
 r = nil
-local currentpage = 0
+currentpage = 0
 lastTime = Time()
 
---page 1 is harmony, page 2 is chaos
-function SwitchPage(self,xSpeed)
+-- page 1 is harmony, page 2 is chaos
+function SwitchPage(self, xSpeed)
     if Time() > (lastTime + 1) then
-        if math.abs(xSpeed) > 6 then
+        if math.abs(xSpeed) > 5 then
             if xSpeed > 0 then
-                newpage = 1
+                local newpage = 1
             else
-                newpage = 2
+                local newpage = 2
             end
 
             if newpage ~= currentpage then
                 currentpage = newpage
-
                 SetPage(currentpage)
             end
         end
@@ -28,10 +27,132 @@ function SwitchPage(self,xSpeed)
     lastTime = Time()
 end
 
---harmony
+-- harmony functions
 
-SetPage(1)
-currentpage = 1
+function shrinkme(self, elapsed)
+    local width = self:Width()
+    local height = self:Height()
+    width = width - elapsed * self.shrinkspeed
+    height = height - elapsed *self.shrinkspeed
+    if width <= 0 or height <= 0 then
+        self:SetWidth(0)
+        self:SetHeight(0)
+        self:Handle("OnUpdate", nil)
+        dad = self:Parent()
+        dad:EnableInput(true)
+        dad:Handle("OnTouchDown",timerShrink)
+    else
+        self:SetWidth(width)
+        self:SetHeight(height)
+    end
+end
+
+function timerShrink(this)
+    pushStarts[this.id]:Push(-1)
+    kid = this:Children()
+    kid:SetHeight(this:Height())
+    kid:SetWidth(this:Width())
+    kid.shrinkspeed = 17
+    this:EnableInput(false)
+    kid:Handle("OnUpdate",shrinkme)
+end
+
+-- chaos functions
+
+function increaseBar(region, x, y, z)
+    if globalChangeVar <= 0.0009 and currwidth > 0 then
+        currwidth = currwidth - 10
+    end
+    if currwidth < 300 then
+        currwidth = currwidth + globalChangeVar
+    end
+    region:SetWidth(currwidth)
+end
+
+function accelStrength( x,y,z )
+    return (math.abs(x) + math.abs(y) + math.abs(z)) / 3
+end
+
+function randomWithStrength(widthOrHeight, strength)
+    return widthOrHeight + math.random(-widthOrHeight, widthOrHeight) * (strength / MAXSTRENGTHPOSSIBLE)
+end
+
+function chaosMovement(region, x, y, z)
+    if debouncer == 0 then
+        initialStrength = accelStrength(x,y,z)
+    end
+    debouncer = debouncer + 1
+    if debouncer ~= 2 then
+        return
+    end
+    debouncer = 0
+
+    local changeInStrength = math.abs(accelStrength(x,y,z) - initialStrength)
+
+    if changeInStrength > maxStrength then
+        maxStrength = changeInStrength
+        --DPrint("Max strength: " .. tostring(maxStrength))
+    end
+
+    if changeInStrength > MAXSTRENGTHPOSSIBLE then
+        pushStarts[math.random(6, 7)]:Push(-1)
+        changeInStrength = MAXSTRENGTHPOSSIBLE
+    end
+    --**needed a global strength variable
+    globalChangeVar = changeInStrength*10
+
+    middleCircle:SetAnchor("TOP", randomWithStrength(halfWidth, changeInStrength), randomWithStrength(halfHeight, changeInStrength) + 50)
+end
+
+-- sample stuff
+
+pushStarts = {}
+samplers = {}
+pushLoop = {}
+pushAmp = {}
+pushSample = {}
+dac = FBDac
+
+for j = 1,7 do
+    samplers[j] = FlowBox(FBSample)
+end
+
+samplers[1]:AddFile(DocumentPath("AbMono.wav"))
+samplers[2]:AddFile(DocumentPath("BbMono.wav"))
+samplers[3]:AddFile(DocumentPath("CMono.wav"))
+samplers[4]:AddFile(DocumentPath("Ab10Mono.wav"))
+samplers[5]:AddFile(DocumentPath("G10Mono.wav"))
+samplers[6]:AddFile(DocumentPath("Crash.wav"))
+samplers[7]:AddFile(DocumentPath("Beeps.wav"))
+
+for i = 1,7 do
+    pushStarts[i] = FlowBox(FBPush)
+    pushLoop[i] = FlowBox(FBPush)
+    pushSample[i] = FlowBox(FBPush)
+    pushAmp[i] = FlowBox(FBPush)
+
+    pushStarts[i].Out:SetPush(samplers[i].Pos)
+    pushLoop[i].Out:SetPush(samplers[i].Loop)
+    pushSample[i].Out:SetPush(samplers[i].Sample)
+    pushAmp[i].Out:SetPush(samplers[i].Amp)
+
+    pushLoop[i]:Push(0)
+    pushStarts[i]:Push(1)
+    pushAmp[i]:Push(.5)
+
+    dac.In:SetPull(samplers[i].Out)
+end
+
+-- constants
+
+barwidth = 300
+currwidth = 0
+globalChangeVar = 0
+
+debouncer = 0
+initialStrength = 0
+maxStrength = 0
+MAXSTRENGTHPOSSIBLE = 0.75
 
 halfWidth = ScreenWidth() / 2
 halfHeight = ScreenHeight() / 2
@@ -47,6 +168,11 @@ if bigHeight > ScreenWidth()/2 then
 end
 bigRadius = bigHeight/2
 smRad = smallHeight/2
+
+-- harmony
+
+SetPage(1)
+currentpage = 1
 
 r1 = Region()
 r1.t = r1:Texture(32,32,32,255)
@@ -161,134 +287,13 @@ dot3:Handle("OnTouchDown", timerShrink)
 dot5:Handle("OnTouchDown", timerShrink)
 dot6:Handle("OnTouchDown", timerShrink)
 
--- sample stuff
-
-pushStarts = {}
-samplers = {}
-pushLoop = {}
-pushAmp = {}
-pushSample = {}
-dac = FBDac
-
-for j = 1,7 do
-    samplers[j] = FlowBox(FBSample)
-end
-
-samplers[1]:AddFile(DocumentPath("AbMono.wav"))
-samplers[2]:AddFile(DocumentPath("BbMono.wav"))
-samplers[3]:AddFile(DocumentPath("CMono.wav"))
-samplers[4]:AddFile(DocumentPath("Ab10Mono.wav"))
-samplers[5]:AddFile(DocumentPath("G10Mono.wav"))
-samplers[6]:AddFile(DocumentPath("Crash.wav"))
-samplers[7]:AddFile(DocumentPath("Beeps.wav"))
-
-for i = 1,7 do
-    pushStarts[i] = FlowBox(FBPush)
-    pushLoop[i] = FlowBox(FBPush)
-    pushSample[i] = FlowBox(FBPush)
-    pushAmp[i] = FlowBox(FBPush)
-
-    pushStarts[i].Out:SetPush(samplers[i].Pos)
-    pushLoop[i].Out:SetPush(samplers[i].Loop)
-    pushSample[i].Out:SetPush(samplers[i].Sample)
-    pushAmp[i].Out:SetPush(samplers[i].Amp)
-
-    pushLoop[i]:Push(0)
-    pushStarts[i]:Push(1)
-    pushAmp[i]:Push(.5)
-
-    dac.In:SetPull(samplers[i].Out)
-end
-
-function shrinkme(self, elapsed)
-    local width = self:Width()
-    local height = self:Height()
-    width = width - elapsed * self.shrinkspeed
-    height = height - elapsed *self.shrinkspeed
-    if width <= 0 or height <= 0 then
-        self:SetWidth(0)
-        self:SetHeight(0)
-        self:Handle("OnUpdate", nil)
-        dad = self:Parent()
-        dad:EnableInput(true)
-        dad:Handle("OnTouchDown",timerShrink)
-    else
-        self:SetWidth(width)
-        self:SetHeight(height)
-    end
-end
-
-function timerShrink(this)
-    pushStarts[this.id]:Push(-1)
-    kid = this:Children()
-    kid:SetHeight(this:Height())
-    kid:SetWidth(this:Width())
-    kid.shrinkspeed = 17
-    this:EnableInput(false)
-    kid:Handle("OnUpdate",shrinkme)
-end
-
---chaos
+-- chaos
 
 SetPage(2)
 currentpage = 2
 
-barwidth = 300
-currwidth = 0
-globalChangeVar = 0
-
-debouncer = 0
-initialStrength = 0
-maxStrength = 0
-MAXSTRENGTHPOSSIBLE = 0.75
-
-function increaseBar(region, x, y, z)
-    if globalChangeVar <= 0.0009 and currwidth > 0 then
-        currwidth = currwidth - 10
-    end
-    if currwidth < 300 then
-        currwidth = currwidth + globalChangeVar
-    end
-    region:SetWidth(currwidth)
-end
-
-function accelStrength( x,y,z )
-    return (math.abs(x) + math.abs(y) + math.abs(z)) / 3
-end
-
-function randomWithStrength(widthOrHeight, strength)
-    return widthOrHeight + math.random(-widthOrHeight, widthOrHeight) * (strength / MAXSTRENGTHPOSSIBLE)
-end
-
-function chaosMovement(region, x, y, z)
-    if debouncer == 0 then
-        initialStrength = accelStrength(x,y,z)
-    end
-    debouncer = debouncer + 1
-    if debouncer ~= 2 then
-        return
-    end
-    debouncer = 0
-
-    local changeInStrength = math.abs(accelStrength(x,y,z) - initialStrength)
-
-    if changeInStrength > maxStrength then
-        maxStrength = changeInStrength
-        --DPrint("Max strength: " .. tostring(maxStrength))
-    end
-
-    if changeInStrength > MAXSTRENGTHPOSSIBLE then
-        pushStarts[math.random(6, 7)]:Push(-1)
-        changeInStrength = MAXSTRENGTHPOSSIBLE
-    end
-    --**needed a global strength variable
-    globalChangeVar = changeInStrength*10
-
-    middleCircle:SetAnchor("TOP", randomWithStrength(halfWidth, changeInStrength), randomWithStrength(halfHeight, changeInStrength) + 50)
-end
-
 r2 = Region()
-r2.t = r2:Texture(0,0,0,255) --dark gray **(changed to black because the png file looks weird if it isn't)
+r2.t = r2:Texture(0,0,0,255) -- dark gray **(changed to black because the png file looks weird if it isn't)
 r2:EnableHorizontalScroll(true)
 r2:Handle("OnHorizontalScroll", SwitchPage)
 r2:Show()
@@ -304,7 +309,6 @@ bar.t = bar:Texture(60,45,70,255)
 bar:SetAnchor("TOPLEFT", 10, 40)
 bar:SetHeight(20)
 bar:SetWidth(barwidth)
---bar:SetLayer("BACKGROUND")
 bar:Show()
 
 progress = Region()
@@ -317,7 +321,6 @@ progress:Show()
 
 middleCircle = Region()
 middleCircle.t = middleCircle:Texture("2000px-Disc_Plain_red.svg.png") --**changed to a png file
---middleCircle.t = middleCircle:Texture(32,32,32,255)
 middleCircle:Show()
 middleCircle:EnableInput(true)
 middleCircle:SetWidth(50)
