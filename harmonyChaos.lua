@@ -1,5 +1,7 @@
 --basic structure declares two pages with different color backgrounds.
 
+
+
 FreeAllRegions()
 FreeAllFlowboxes()
 DPrint("")
@@ -30,6 +32,7 @@ end
 
 SetPage(1)
 currentpage = 1
+
 
 --harmony
 r1 = Region()
@@ -189,11 +192,12 @@ end
         samplers[j] = FlowBox(FBSample)
     end
 
-    samplers[1]:AddFile(DocumentPath("AbMono.wav")) 
-    samplers[2]:AddFile(DocumentPath("BbMono.wav")) 
-    samplers[3]:AddFile(DocumentPath("CMono.wav")) 
-    samplers[4]:AddFile(DocumentPath("Ab10Mono.wav")) 
-    samplers[5]:AddFile(DocumentPath("G10Mono.wav")) 
+    samplers[1]:AddFile(DocumentPath("AbMono.wav"))
+    samplers[2]:AddFile(DocumentPath("BbMono.wav"))
+    samplers[3]:AddFile(DocumentPath("CMono.wav"))
+    samplers[4]:AddFile(DocumentPath("Ab10Mono.wav"))
+    samplers[5]:AddFile(DocumentPath("G10Mono.wav"))
+
 
     for i = 1,5 do
         pushStarts[i] = FlowBox(FBPush)
@@ -212,10 +216,6 @@ end
 
         dac.In:SetPull(samplers[i].Out)
     end
-
-    
-
-   
 
 
 
@@ -300,6 +300,20 @@ r2:SetHeight(ScreenHeight())
 r2:SetAnchor("BOTTOMLEFT",0,0)
 r2:SetLayer("BACKGROUND")
 r2:Handle("OnAccelerate", chaosMovement)
+accel = FBAccel
+------- CHAOS SOUNDS --------
+-----------------------------
+    if Page() == 2 then
+        --FreeAllFlowboxes()
+        cmap = FlowBox(FBCMap)
+        dac2 = FlowBox(FBDac)
+        accel.X:SetPush(cmap.Freq)
+        accel.Y:SetPush(cmap.NonL)
+        dac2.In:SetPull(cmap.Out) -- chaos!!!
+    end
+-----------------------------
+-----------------------------
+
 
 --**My modification starts here
 bar = Region()
@@ -307,7 +321,6 @@ bar.t = bar:Texture(60,45,70,255)
 bar:SetAnchor("TOPLEFT", ScreenHeight()/50, ScreenWidth()/6)
 bar:SetHeight(20)
 bar:SetWidth(barwidth)
---bar:SetLayer("BACKGROUND")
 bar:Show()
 
 progress = Region()
@@ -328,5 +341,14 @@ middleCircle:EnableInput(true)
 middleCircle:SetWidth(50)
 middleCircle:SetHeight(50)
 middleCircle:SetAnchor("TOP", halfWidth, halfHeight)
+
+-------- When not on chaos page --------
+----------------------------------------
+    if Page() == 1 then
+        --FreeAllFlowboxes()
+        dac2.In:RemovePull(cmap.Out)
+    end
+----------------------------------------
+----------------------------------------
 
 SetPage(1)
