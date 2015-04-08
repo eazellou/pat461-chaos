@@ -28,13 +28,13 @@ function SwitchPage(self,xSpeed)
             if Page() == 2 then
                 if xSpeed > 0 then
                     SetPage(1)
-                    switchedToMode('chaos')
+                    switchedToMode("harmony")
                     updateSounds()
                 end
             else
                 if xSpeed < 0 then
                     SetPage(2)
-                    switchedToMode('harmony')
+                    switchedToMode("chaos")
                     updateSounds()
                 end
             end
@@ -45,36 +45,39 @@ end
 
 -- Networking Functions
 function serviceConnected(region, hostName)
-    DPrint('Connected: ' .. hostName)
+    DPrint("Connected: " .. hostName)
     netServices[hostName] = hostName
     StartNetDiscovery("ChaosAndHarmony")
 end
 
 function serviceDisconnected(region, hostName)
-    DPrint('Disconnected: ' .. hostName)
-    table.remove(netServices, hostName)
+    DPrint("Disconnected: " .. hostName)
+    netServices[hostName] = nil
 end
 
 function receivedMessage(region, chaosOrHarmony)
-    DPrint('Received message: ' .. chaosOrHarmony)
+    messageInfo = chaosOrHarmony:split(":")
 
-    messageInfo = chaosOrHarmony:split(':')
+    DPrint(messageInfo[2] .. " connected as " .. messageInfo[1])
 
-    if messageInfo[1] == 'harmony' then
-        for index = 1, #chaosDevices do
-            if chaosDevices[index] == messageInfo[2] then
-                table.remove(chaosDevices, index)
-            end
-        end
-    else
-        table.insert(chaosDevices, messageInfo[2])
+    if messageInfo[1] == "harmony" then
+        chaosDevices[messageInfo[2]] = nil
+        numChaosDevices = numChaosDevices - 1
+    elseif chaosDevices[messageInfo[2]] == nil then
+        chaosDevices[messageInfo[2]] = messageInfo[2]
+        numChaosDevices = numChaosDevices + 1
     end
 
+    adjustProgressBar()
 end
 
 function switchedToMode(mode)
+    receivedMessage(nil, mode .. ":My device")
+
     for key,host in pairs(netServices) do
-        SendOSCMessage(host, NET_PORT, "/urMus/text", mode .. ':' .. tostring(myIP))
+        if host ~= nil then
+            SendOSCMessage(host, NET_PORT, "/urMus/text", mode .. ":" .. tostring(myIP))
+        end
     end
 end
 
@@ -139,8 +142,8 @@ function timerShrink(this)
 end
 
 -- Chaos View Functions
-function increaseBar()
-    local percentageOfPeople = #chaosDevices / MAX_NUM_PEOPLE
+function adjustProgressBar()
+    local percentageOfPeople = numChaosDevices / MAX_NUM_PEOPLE
     currwidth = percentageOfPeople * ScreenWidth()
     progress:SetWidth(currwidth)
 end
@@ -178,6 +181,8 @@ end
 NET_PORT = 8889
 
 MAX_NUM_PEOPLE = 10
+
+numChaosDevices = 0
 chaosDevices = {}
 netServices = {}
 
@@ -391,11 +396,14 @@ middleCircle:SetWidth(50)
 middleCircle:SetHeight(50)
 middleCircle:SetAnchor("TOP", halfWidth, halfHeight)
 
+switchedToMode("chaos")
+
 -- Switch back to harmony
 SetPage(1)
 
+switchedToMode("harmony")
+
 updateSounds()
-switchedToMode('harmony')
 
 -- Initial Network Setup
 SetOSCPort(NET_PORT)
@@ -403,8 +411,8 @@ myIP, port = StartOSCListener()
 StartNetAdvertise("ChaosAndHarmony", NET_PORT)
 
 netRegion = Region()
-netRegion:Handle('OnNetConnect', serviceConnected)
-netRegion:Handle('OnNetDisconnect', serviceDisconnected)
-netRegion:Handle('OnOSCMessage', receivedMessage)
+netRegion:Handle("OnNetConnect", serviceConnected)
+netRegion:Handle("OnNetDisconnect", serviceDisconnected)
+netRegion:Handle("OnOSCMessage", receivedMessage)
 StartNetDiscovery("ChaosAndHarmony")
 
