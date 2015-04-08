@@ -58,7 +58,7 @@ end
 function receivedMessage(region, chaosOrHarmony)
     messageInfo = chaosOrHarmony:split(":")
 
-    DPrint(messageInfo[2] .. " connected as " .. messageInfo[1])
+    DPrint(messageInfo[2] .. " switched to " .. messageInfo[1])
 
     if messageInfo[1] == "harmony" then
         chaosDevices[messageInfo[2]] = nil
