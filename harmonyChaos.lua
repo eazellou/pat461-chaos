@@ -46,7 +46,7 @@ end
 -- Networking Functions
 function serviceConnected(region, hostName)
     DPrint('Connected: ' .. hostName)
-    table[hostName] = hostName
+    netServices[hostName] = hostName
     StartNetDiscovery("ChaosAndHarmony")
 end
 
@@ -73,8 +73,8 @@ function receivedMessage(region, chaosOrHarmony)
 end
 
 function switchedToMode(mode)
-    for i = 1, #netServices do
-        SendOSCMessage(netServices[i], NET_PORT, "/urMus/text", mode .. ':' .. tostring(myIP))
+    for key,host in pairs(netServices) do
+        SendOSCMessage(host, NET_PORT, "/urMus/text", mode .. ':' .. tostring(myIP))
     end
 end
 
@@ -153,16 +153,8 @@ function randomWithStrength(widthOrHeight, strength)
 end
 
 function chaosMovement(region, x, y, z)
-    if debouncer == 0 then
-        initialStrength = accelStrength(x,y,z)
-    end
-    debouncer = debouncer + 1
-    if debouncer ~= 2 then
-        return
-    end
-    debouncer = 0
-
-    local changeInStrength = math.abs(accelStrength(x,y,z) - initialStrength)
+    local strength = accelStrength(x,y,z)
+    local changeInStrength = math.abs(strength - previousStrength)
 
     if changeInStrength > maxStrength then
         maxStrength = changeInStrength
@@ -172,9 +164,12 @@ function chaosMovement(region, x, y, z)
     if changeInStrength > MAXSTRENGTHPOSSIBLE then
         changeInStrength = MAXSTRENGTHPOSSIBLE
     end
+
     globalChangeVar = changeInStrength*10
 
     middleCircle:SetAnchor("TOP", randomWithStrength(halfWidth, changeInStrength), randomWithStrength(halfHeight, changeInStrength) + 50)
+
+    previousStrength = strength
 end
 
 -- Constants
@@ -233,12 +228,13 @@ currwidth = 0
 globalChangeVar = 0
 
 debouncer = 0
-initialStrength = 0
+previousStrength = 0
 maxStrength = 0
 MAXSTRENGTHPOSSIBLE = 0.75
 
 -- Time
 lastTime = Time()
+
 
 -- View setup
 
@@ -362,7 +358,7 @@ dot6:Handle("OnTouchDown", timerShrink)
 SetPage(2)
 
 r2 = Region()
-r2.t = r2:Texture(0,0,0,255) --dark gray **(changed to black because the png file looks weird if it isn't)
+r2.t = r2:Texture(0,0,0,255)
 r2:EnableHorizontalScroll(true)
 r2:Handle("OnHorizontalScroll", SwitchPage)
 r2:Show()
@@ -388,7 +384,7 @@ progress:SetWidth(currwidth)
 progress:Show()
 
 middleCircle = Region()
-middleCircle.t = middleCircle:Texture("2000px-Disc_Plain_red.svg.png") --**changed to a png file
+middleCircle.t = middleCircle:Texture("2000px-Disc_Plain_red.svg.png")
 middleCircle:Show()
 middleCircle:EnableInput(true)
 middleCircle:SetWidth(50)
