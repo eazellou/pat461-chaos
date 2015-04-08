@@ -72,7 +72,7 @@ function receivedMessage(region, chaosOrHarmony)
 end
 
 function switchedToMode(mode)
-    receivedMessage(nil, mode .. ":My device")
+    receivedMessage(nil, mode .. ":I")
 
     for key,host in pairs(netServices) do
         if host ~= nil then
