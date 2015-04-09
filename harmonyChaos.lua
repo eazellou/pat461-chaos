@@ -76,7 +76,8 @@ function switchedToMode(mode)
 
     for key,host in pairs(netServices) do
         if host ~= nil then
-            SendOSCMessage(host, NET_PORT, "/urMus/text", mode .. ":" .. tostring(myIP))
+            DPrint("Sending " .. mode .. " to " .. myIP)
+            SendOSCMessage(host, NET_PORT, "/urMus/text", mode .. ":" .. myIP)
         end
     end
 end
@@ -144,7 +145,7 @@ end
 -- Chaos View Functions
 function adjustProgressBar()
     local percentageOfPeople = numChaosDevices / MAX_NUM_PEOPLE
-    currwidth = percentageOfPeople * ScreenWidth()
+    currwidth = percentageOfPeople * bar:Width()
     progress:SetWidth(currwidth)
 end
 function accelStrength( x,y,z )
@@ -378,7 +379,7 @@ bar = Region()
 bar.t = bar:Texture(60,45,70,255)
 bar:SetAnchor("TOPLEFT", ScreenHeight()/50, ScreenWidth()/6)
 bar:SetHeight(20)
-bar:SetWidth(barwidth)
+bar:SetWidth(ScreenWidth() - (ScreenWidth()/20))
 bar:Show()
 
 progress = Region()
