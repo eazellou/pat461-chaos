@@ -449,3 +449,4 @@ netRegion:Handle("OnNetConnect", serviceConnected)
 netRegion:Handle("OnNetDisconnect", serviceDisconnected)
 netRegion:Handle("OnOSCMessage", receivedMessage)
 StartNetDiscovery("chaosandharmony")
+
