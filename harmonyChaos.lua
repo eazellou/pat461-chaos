@@ -50,32 +50,10 @@ function SimpleSwitchPage(self)
     end
 end
 
-function SwitchPage(self,xSpeed)
-    if Time() > (lastTime + 1) then
-        if math.abs(xSpeed) > 6 then
-            if Page() == 2 then
-                if xSpeed > 0 then
-                    SetPage(1)
-                    switchedToMode("harmony")
-                    updateSounds()
-                end
-            else
-                if xSpeed < 0 then
-                    SetPage(2)
-                    switchedToMode("chaos")
-                    updateSounds()
-                end
-            end
-            lastTime = Time()
-        end
-    end
-end
-
 -- Networking Functions
 function serviceConnected(region, hostName)
-   newDPrint("Connected: " .. hostName)
+    newDPrint("Connected: " .. hostName)
     netServices[hostName] = hostName
---    StartNetDiscovery("chaosandharmony")
 end
 
 function serviceDisconnected(region, hostName)
@@ -89,25 +67,15 @@ function receivedMessage(region, chaosOrHarmony)
     if messageInfo[1] == "harmony" and chaosDevices[messageInfo[2]] ~= nil then
         chaosDevices[messageInfo[2]] = nil
         numChaosDevices = numChaosDevices - 1
-
-        if firstPlayersIP == messageInfo[2] then
-            updateSounds(true)
-        end
     elseif messageInfo[1] == "chaos" and chaosDevices[messageInfo[2]] == nil then
         chaosDevices[messageInfo[2]] = messageInfo[2]
         numChaosDevices = numChaosDevices + 1
-
-        if firstPlayersIP == messageInfo[2] then
-            updateSounds(true)
-        end
     elseif messageInfo[1] == "firstPlayer" then
         firstPlayersIP = messageInfo[2]
     elseif messageInfo[1] == "notePlayed" then
         if dots[messageInfo[3]] == nil or firstPlayersIP == nil or messageInfo[2] ~= firstPlayersIP then
             return
         end
-
-        updateSounds(true)
 
         timerShrink(dots[messageInfo[3]])
     else
@@ -142,13 +110,13 @@ function switchedToMode(mode)
 --    newDPrint("switch2")
 end
 
-function updateSounds(override)
+function updateSounds()
     -- HARMONY SOUNDS
     if Page() == 1 then
         --FreeAllFlowboxes()
         dac.In:RemovePull(cmap.Out)
 
-        if not override and displayApp then
+        if displayApp then
             return
         end
 
@@ -171,7 +139,7 @@ function updateSounds(override)
             dac.In:RemovePull(samplers[i].Out)
         end
 
-        if not override and displayApp then
+        if displayApp then
             return
         end
 
@@ -201,7 +169,10 @@ function shrinkme(self, elapsed)
 end
 
 function timerShrink(this)
-    pushStarts[this.id]:Push(-1)
+    if not displayApp then
+        pushStarts[this.id]:Push(-1)
+    end
+
     kid = this:Children()
     kid:SetHeight(this:Height())
     kid:SetWidth(this:Width())
@@ -422,7 +393,6 @@ SetPage(1)
 r1 = Region()
 r1.t = r1:Texture(0,0,0,255)
 r1:EnableHorizontalScroll(true)
---r1:Handle("OnHorizontalScroll", SwitchPage)
 r1:Handle("OnDoubleTap", SimpleSwitchPage)
 r1:Handle("OnUpdate", updateDisplayChaos)
 r1:Show()
@@ -579,7 +549,6 @@ SetPage(2)
 r2 = Region()
 r2.t = r2:Texture(0,0,0,255)
 r2:EnableHorizontalScroll(true)
---r2:Handle("OnHorizontalScroll", SwitchPage)
 r2:Handle("OnDoubleTap", SimpleSwitchPage)
 r2:Show()
 r2:EnableInput(true)
