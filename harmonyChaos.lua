@@ -10,7 +10,7 @@ FreeAllFlowboxes()
 DPrint("")
 
 function DocumentPath(path)
-return SystemPath(path)
+    return SystemPath(path)
 end
 
 -- Utility Functions
@@ -27,6 +27,12 @@ function string:split( inSplitPattern, outResults )
   end
   table.insert( outResults, string.sub( self, theStart ) )
   return outResults
+end
+
+function newDPrint(message)
+    if not displayApp then
+        DPrint(message)
+    end
 end
 
 --page 1 is harmony, page 2 is chaos
@@ -65,13 +71,13 @@ end
 
 -- Networking Functions
 function serviceConnected(region, hostName)
-   DPrint("Connected: " .. hostName)
+   newDPrint("Connected: " .. hostName)
     netServices[hostName] = hostName
 --    StartNetDiscovery("chaosandharmony")
 end
 
 function serviceDisconnected(region, hostName)
-    DPrint("Disconnected: " .. hostName)
+    newDPrint("Disconnected: " .. hostName)
     netServices[hostName] = nil
 end
 
@@ -81,16 +87,26 @@ function receivedMessage(region, chaosOrHarmony)
     if messageInfo[1] == "harmony" and chaosDevices[messageInfo[2]] ~= nil then
         chaosDevices[messageInfo[2]] = nil
         numChaosDevices = numChaosDevices - 1
+
+        if firstPlayersIP == messageInfo[2] then
+            updateSounds(true)
+        end
     elseif messageInfo[1] == "chaos" and chaosDevices[messageInfo[2]] == nil then
         chaosDevices[messageInfo[2]] = messageInfo[2]
         numChaosDevices = numChaosDevices + 1
+
+        if firstPlayersIP == messageInfo[2] then
+            updateSounds(true)
+        end
+    elseif messageInfo[1] == "firstPlayer" then
+        firstPlayersIP = messageInfo[2]
     else
         return
     end
 
-    DPrint(messageInfo[2] .. " switched to " .. messageInfo[1])
+    newDPrint(messageInfo[2] .. " switched to " .. messageInfo[1])
 
-    DPrint("chaos: "..numChaosDevices)
+    newDPrint("chaos: "..numChaosDevices)
 
     adjustProgressBar()
 end
@@ -107,22 +123,22 @@ function switchedToMode(mode)
     receivedMessage(nil, mode .. ":I")
 
     for key,vhost in pairs(netServices) do
---        DPrint("switch "..(key or "nil"))
+--        newDPrint("switch "..(key or "nil"))
         if vhost ~= nil then
-            DPrint("Sending " .. mode .. " to " .. vhost)
+            newDPrint("Sending " .. mode .. " to " .. vhost)
             SendOSCMessage(vhost, NET_PORT, "/urMus/text", mode .. ":" .. myIP)
         end
     end
---    DPrint("switch2")
+--    newDPrint("switch2")
 end
 
-function updateSounds()
+function updateSounds(override)
     -- HARMONY SOUNDS
     if Page() == 1 then
         --FreeAllFlowboxes()
         dac.In:RemovePull(cmap.Out)
 
-        if displayApp then
+        if not override and displayApp then
             return
         end
 
@@ -145,7 +161,7 @@ function updateSounds()
             dac.In:RemovePull(samplers[i].Out)
         end
 
-        if displayApp then
+        if not override and displayApp then
             return
         end
 
@@ -206,7 +222,7 @@ function chaosMovement(region, x, y, z)
 
     if changeInStrength > maxStrength then
         maxStrength = changeInStrength
-        --DPrint("Max strength: " .. tostring(maxStrength))
+        --newDPrint("Max strength: " .. tostring(maxStrength))
     end
 
     if changeInStrength > MAXSTRENGTHPOSSIBLE then
@@ -221,6 +237,10 @@ function chaosMovement(region, x, y, z)
 end
 
 function displayAppChange()
+    if not displayApp then
+        DPrint("")
+    end
+
     displayApp = not displayApp
 
     if displayApp then
@@ -246,10 +266,32 @@ function displayAppChange()
     end
 end
 
+function firstPlayerChange()
+    firstPlayer = not firstPlayer
+
+    if firstPlayer then
+        firstPlayerButton1.t = firstPlayerButton1:Texture(0,255,0,255)
+        firstPlayerButton2.t = firstPlayerButton2:Texture(0,255,0,255)
+
+        for key,vhost in pairs(netServices) do
+            if vhost ~= nil then
+                SendOSCMessage(vhost, NET_PORT, "/urMus/text", "firstPlayer" .. ":" .. myIP)
+            end
+        end
+    else
+        firstPlayerButton1.t = firstPlayerButton1:Texture(255,255,255,255)
+        firstPlayerButton2.t = firstPlayerButton2:Texture(255,255,255,255)
+    end
+end
+
 -- Constants
 
 -- Does this app contribute or just show off
 displayApp = false
+
+-- Who was the first player
+firstPlayer = false
+firstPlayersIP = nil
 
 -- Network
 NET_PORT = 8888
@@ -339,6 +381,15 @@ displayButton1:SetHeight(20)
 displayButton1:SetWidth(40)
 displayButton1:Handle("OnTouchUp", displayAppChange)
 displayButton1:Show()
+
+firstPlayerButton1 = Region()
+firstPlayerButton1.t = firstPlayerButton1:Texture(255,255,255,255)
+firstPlayerButton1:SetAnchor("TOPLEFT", r1, "TOPLEFT", 0, 0)
+firstPlayerButton1:EnableInput(true)
+firstPlayerButton1:SetHeight(20)
+firstPlayerButton1:SetWidth(40)
+firstPlayerButton1:Handle("OnTouchUp", firstPlayerChange)
+firstPlayerButton1:Show()
 
 bar2 = Region()
 bar2.t = bar2:Texture(60,45,70,255)
@@ -478,6 +529,15 @@ displayButton2:SetHeight(20)
 displayButton2:SetWidth(40)
 displayButton2:Handle("OnTouchUp", displayAppChange)
 displayButton2:Show()
+
+firstPlayerButton2 = Region()
+firstPlayerButton2.t = firstPlayerButton2:Texture(255,255,255,255)
+firstPlayerButton2:SetAnchor("TOPLEFT", r2, "TOPLEFT", 0, 0)
+firstPlayerButton2:EnableInput(true)
+firstPlayerButton2:SetHeight(20)
+firstPlayerButton2:SetWidth(40)
+firstPlayerButton2:Handle("OnTouchUp", firstPlayerChange)
+firstPlayerButton2:Show()
 
 bar1 = Region()
 bar1.t = bar1:Texture(60,45,70,255)
