@@ -113,6 +113,10 @@ function switchedToMode(mode)
 end
 
 function updateSounds()
+    if displayApp then
+        return
+    end
+
     -- HARMONY SOUNDS
     if Page() == 1 then
         --FreeAllFlowboxes()
