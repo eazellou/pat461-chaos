@@ -153,8 +153,8 @@ end
 function shrinkme(self, elapsed)
     local width = self:Width()
     local height = self:Height()
-    width = width - elapsed * self.shrinkspeed
-    height = height - elapsed *self.shrinkspeed
+    width = width - elapsed * SHRINK_SPEED
+    height = height - elapsed * SHRINK_SPEED
     if width <= 0 or height <= 0 then
         self:SetWidth(0)
         self:SetHeight(0)
@@ -173,11 +173,11 @@ function timerShrink(this)
         pushStarts[this.id]:Push(-1)
     end
 
+    this:EnableInput(false)
+
     kid = this:Children()
     kid:SetHeight(this:Height())
     kid:SetWidth(this:Width())
-    kid.shrinkspeed = 17
-    this:EnableInput(false)
     kid:Handle("OnUpdate",shrinkme)
 
     if firstPlayer then
@@ -370,6 +370,8 @@ if bigHeight > ScreenWidth()/2 then
 end
 bigRadius = bigHeight/2
 smRad = smallHeight/2
+
+SHRINK_SPEED = 17
 
 -- Chaos View Constants
 
