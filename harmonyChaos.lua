@@ -37,7 +37,7 @@ end
 
 --page 1 is harmony, page 2 is chaos
 function SimpleSwitchPage(self)
-    if Page() == 1 then
+    if Page() == 1 and not displayApp then
         SetPage(2)
         switchedToMode("chaos")
         updateSounds()
@@ -100,6 +100,14 @@ function receivedMessage(region, chaosOrHarmony)
         end
     elseif messageInfo[1] == "firstPlayer" then
         firstPlayersIP = messageInfo[2]
+    elseif messageInfo[1] == "notePlayed" then
+        if dots[messageInfo[3]] == nil or firstPlayersIP == nil or messageInfo[2] ~= firstPlayersIP then
+            return
+        end
+
+        updateSounds(true)
+
+        timerShrink(dots[messageInfo[3]])
     else
         return
     end
@@ -198,6 +206,14 @@ function timerShrink(this)
     kid.shrinkspeed = 17
     this:EnableInput(false)
     kid:Handle("OnUpdate",shrinkme)
+
+    if firstPlayer then
+        for key,vhost in pairs(netServices) do
+            if vhost ~= nil then
+                SendOSCMessage(vhost, NET_PORT, "/urMus/text", "notePlayed" .. ":" .. myIP .. ":" .. tostring(this.id))
+            end
+        end
+    end
 end
 
 -- Chaos View Functions
@@ -236,6 +252,15 @@ function chaosMovement(region, x, y, z)
     previousStrength = strength
 end
 
+function updateDisplayChaos()
+    if not displayApp then
+        return
+    end
+
+    local changeInStrength = (numChaosDevices / MAX_NUM_PEOPLE) * MAXSTRENGTHPOSSIBLE
+    middleCircleDisplay:SetAnchor("TOP", randomWithStrength(halfWidth, changeInStrength), randomWithStrength(halfHeight, changeInStrength) + 50)
+end
+
 function displayAppChange()
     if firstPlayer then
         return
@@ -245,6 +270,12 @@ function displayAppChange()
         DPrint("")
     end
 
+    dot1:EnableInput(displayApp)
+    dot2:EnableInput(displayApp)
+    dot3:EnableInput(displayApp)
+    dot5:EnableInput(displayApp)
+    dot6:EnableInput(displayApp)
+
     displayApp = not displayApp
 
     if displayApp then
@@ -253,12 +284,23 @@ function displayAppChange()
 
         bar2:Show()
         progress2:Show()
+        middleCircleDisplay:Show()
+
+        firstPlayerButton1:Hide()
+        firstPlayerButton2:Hide()
+
+        SimpleSwitchPage(nil)
+
     else
         displayButton1.t = displayButton1:Texture(255,255,255,255)
         displayButton2.t = displayButton2:Texture(255,255,255,255)
 
         bar2:Hide()
         progress2:Hide()
+        middleCircleDisplay:Hide()
+
+        firstPlayerButton1:Show()
+        firstPlayerButton2:Show()
     end
 
     updateSounds()
@@ -286,9 +328,15 @@ function firstPlayerChange()
                 SendOSCMessage(vhost, NET_PORT, "/urMus/text", "firstPlayer" .. ":" .. myIP)
             end
         end
+
+        displayButton1:Hide()
+        displayButton2:Hide()
     else
         firstPlayerButton1.t = firstPlayerButton1:Texture(255,255,255,255)
         firstPlayerButton2.t = firstPlayerButton2:Texture(255,255,255,255)
+
+        displayButton1:Show()
+        displayButton2:Show()
     end
 end
 
@@ -370,10 +418,11 @@ lastTime = Time()
 SetPage(1)
 
 r1 = Region()
-r1.t = r1:Texture(32,32,32,255)
+r1.t = r1:Texture(0,0,0,255)
 r1:EnableHorizontalScroll(true)
 --r1:Handle("OnHorizontalScroll", SwitchPage)
 r1:Handle("OnDoubleTap", SimpleSwitchPage)
+r1:Handle("OnUpdate", updateDisplayChaos)
 r1:Show()
 r1:EnableInput(true)
 r1:SetWidth(ScreenWidth())
@@ -398,6 +447,13 @@ firstPlayerButton1:SetHeight(20)
 firstPlayerButton1:SetWidth(40)
 firstPlayerButton1:Handle("OnTouchUp", firstPlayerChange)
 firstPlayerButton1:Show()
+
+middleCircleDisplay = Region()
+middleCircleDisplay.t = middleCircleDisplay:Texture("2000px-Disc_Plain_red.svg.png")
+middleCircleDisplay:EnableInput(true)
+middleCircleDisplay:SetWidth(50)
+middleCircleDisplay:SetHeight(50)
+middleCircleDisplay:SetAnchor("TOP", halfWidth, halfHeight)
 
 bar2 = Region()
 bar2.t = bar2:Texture(60,45,70,255)
@@ -500,6 +556,8 @@ time6:SetHeight(0)
 time6:SetWidth(0)
 time6:SetAnchor("CENTER",dot6,"CENTER")
 time6:SetParent(dot6)
+
+dots = {["1"]=dot1, ["2"]=dot2, ["3"]=dot3, ["4"]=dot5, ["5"]=dot6}
 
 dot1:EnableInput(true)
 dot2:EnableInput(true)
