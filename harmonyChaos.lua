@@ -78,17 +78,17 @@ end
 function receivedMessage(region, chaosOrHarmony)
     messageInfo = chaosOrHarmony:split(":")
 
-    DPrint(messageInfo[2] .. " switched to " .. messageInfo[1])
-
-    if messageInfo[1] == "harmony" then
+    if messageInfo[1] == "harmony" and chaosDevices[messageInfo[2]] ~= nil then
         chaosDevices[messageInfo[2]] = nil
         numChaosDevices = numChaosDevices - 1
-    elseif chaosDevices[messageInfo[2]] == nil then
+    elseif messageInfo[1] == "chaos" and chaosDevices[messageInfo[2]] == nil then
         chaosDevices[messageInfo[2]] = messageInfo[2]
         numChaosDevices = numChaosDevices + 1
     else
-        DPrint("ouch")
+        return
     end
+
+    DPrint(messageInfo[2] .. " switched to " .. messageInfo[1])
 
     DPrint("chaos: "..numChaosDevices)
 
@@ -96,11 +96,15 @@ function receivedMessage(region, chaosOrHarmony)
 end
 
 function switchedToMode(mode)
-    receivedMessage(nil, mode .. ":I")
-
     if displayApp then
+        if chaosDevices["I"] ~= nil then
+            receivedMessage(nil, "harmony:I")
+        end
+
         return
     end
+
+    receivedMessage(nil, mode .. ":I")
 
     for key,vhost in pairs(netServices) do
 --        DPrint("switch "..(key or "nil"))
@@ -113,14 +117,14 @@ function switchedToMode(mode)
 end
 
 function updateSounds()
-    if displayApp then
-        return
-    end
-
     -- HARMONY SOUNDS
     if Page() == 1 then
         --FreeAllFlowboxes()
         dac.In:RemovePull(cmap.Out)
+
+        if displayApp then
+            return
+        end
 
         for i=1,5 do
             pushStarts[i].Out:SetPush(samplers[i].Pos)
@@ -139,6 +143,10 @@ function updateSounds()
     if Page() == 2 then
         for i=1,5 do
             dac.In:RemovePull(samplers[i].Out)
+        end
+
+        if displayApp then
+            return
         end
 
         accel.X:SetPush(cmap.Freq)
@@ -179,8 +187,10 @@ end
 -- Chaos View Functions
 function adjustProgressBar()
     local percentageOfPeople = numChaosDevices / MAX_NUM_PEOPLE
-    currwidth = percentageOfPeople * bar:Width()
-    progress:SetWidth(currwidth)
+    currwidth = percentageOfPeople * bar1:Width()
+    progress1:SetWidth(currwidth)
+    currwidth = percentageOfPeople * bar2:Width()
+    progress2:SetWidth(currwidth)
 end
 function accelStrength( x,y,z )
     return (math.abs(x) + math.abs(y) + math.abs(z)) / 3
@@ -216,9 +226,23 @@ function displayAppChange()
     if displayApp then
         displayButton1.t = displayButton1:Texture(150,0,150,255)
         displayButton2.t = displayButton2:Texture(150,0,150,255)
+
+        bar2:Show()
+        progress2:Show()
     else
         displayButton1.t = displayButton1:Texture(255,255,255,255)
         displayButton2.t = displayButton2:Texture(255,255,255,255)
+
+        bar2:Hide()
+        progress2:Hide()
+    end
+
+    updateSounds()
+
+    if Page() == 1 then
+        switchedToMode("harmony")
+    else
+        switchedToMode("chaos")
     end
 end
 
@@ -315,6 +339,18 @@ displayButton1:SetHeight(20)
 displayButton1:SetWidth(40)
 displayButton1:Handle("OnTouchUp", displayAppChange)
 displayButton1:Show()
+
+bar2 = Region()
+bar2.t = bar2:Texture(60,45,70,255)
+bar2:SetAnchor("BOTTOMLEFT", r1, "BOTTOMLEFT")
+bar2:SetHeight(20)
+bar2:SetWidth(ScreenWidth())
+
+progress2 = Region()
+progress2.t = progress2:Texture(150,0,150,255)
+progress2:SetAnchor("BOTTOMLEFT", r1, "BOTTOMLEFT")
+progress2:SetHeight(20)
+progress2:SetWidth(currwidth)
 
 dot1 = Region()
 dot1.t = dot1:Texture(DocumentPath("Dot.png"))
@@ -443,19 +479,19 @@ displayButton2:SetWidth(40)
 displayButton2:Handle("OnTouchUp", displayAppChange)
 displayButton2:Show()
 
-bar = Region()
-bar.t = bar:Texture(60,45,70,255)
-bar:SetAnchor("TOPLEFT", ScreenHeight()/50, ScreenWidth()/6)
-bar:SetHeight(20)
-bar:SetWidth(ScreenWidth() - (ScreenWidth()/20))
-bar:Show()
+bar1 = Region()
+bar1.t = bar1:Texture(60,45,70,255)
+bar1:SetAnchor("BOTTOMLEFT", r2, "BOTTOMLEFT")
+bar1:SetHeight(20)
+bar1:SetWidth(ScreenWidth())
+bar1:Show()
 
-progress = Region()
-progress.t = progress:Texture(150,0,150,255)
-progress:SetAnchor("TOPLEFT", ScreenHeight()/50, ScreenWidth()/6)
-progress:SetHeight(20)
-progress:SetWidth(currwidth)
-progress:Show()
+progress1 = Region()
+progress1.t = progress1:Texture(150,0,150,255)
+progress1:SetAnchor("BOTTOMLEFT", r2, "BOTTOMLEFT")
+progress1:SetHeight(20)
+progress1:SetWidth(currwidth)
+progress1:Show()
 
 middleCircle = Region()
 middleCircle.t = middleCircle:Texture("2000px-Disc_Plain_red.svg.png")
