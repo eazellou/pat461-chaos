@@ -97,6 +97,11 @@ end
 
 function switchedToMode(mode)
     receivedMessage(nil, mode .. ":I")
+
+    if displayApp then
+        return
+    end
+
     for key,vhost in pairs(netServices) do
 --        DPrint("switch "..(key or "nil"))
         if vhost ~= nil then
@@ -201,7 +206,22 @@ function chaosMovement(region, x, y, z)
     previousStrength = strength
 end
 
+function displayAppChange()
+    displayApp = not displayApp
+
+    if displayApp then
+        displayButton1.t = displayButton1:Texture(150,0,150,255)
+        displayButton2.t = displayButton2:Texture(150,0,150,255)
+    else
+        displayButton1.t = displayButton1:Texture(255,255,255,255)
+        displayButton2.t = displayButton2:Texture(255,255,255,255)
+    end
+end
+
 -- Constants
+
+-- Does this app contribute or just show off
+displayApp = false
 
 -- Network
 NET_PORT = 8888
@@ -266,7 +286,6 @@ MAXSTRENGTHPOSSIBLE = 0.75
 -- Time
 lastTime = Time()
 
-
 -- View setup
 
 --harmony
@@ -283,6 +302,15 @@ r1:SetWidth(ScreenWidth())
 r1:SetHeight(ScreenHeight())
 r1:SetAnchor("BOTTOMLEFT",0,0)
 r1:SetLayer("BACKGROUND")
+
+displayButton1 = Region()
+displayButton1.t = displayButton1:Texture(255,255,255,255)
+displayButton1:SetAnchor("TOPRIGHT", r1, "TOPRIGHT", 0, 0)
+displayButton1:EnableInput(true)
+displayButton1:SetHeight(20)
+displayButton1:SetWidth(40)
+displayButton1:Handle("OnTouchUp", displayAppChange)
+displayButton1:Show()
 
 dot1 = Region()
 dot1.t = dot1:Texture(DocumentPath("Dot.png"))
@@ -402,6 +430,15 @@ r2:SetAnchor("BOTTOMLEFT",0,0)
 r2:SetLayer("BACKGROUND")
 r2:Handle("OnAccelerate", chaosMovement)
 
+displayButton2 = Region()
+displayButton2.t = displayButton2:Texture(255,255,255,255)
+displayButton2:SetAnchor("TOPRIGHT", r2, "TOPRIGHT", 0, 0)
+displayButton2:EnableInput(true)
+displayButton2:SetHeight(20)
+displayButton2:SetWidth(40)
+displayButton2:Handle("OnTouchUp", displayAppChange)
+displayButton2:Show()
+
 bar = Region()
 bar.t = bar:Texture(60,45,70,255)
 bar:SetAnchor("TOPLEFT", ScreenHeight()/50, ScreenWidth()/6)
@@ -425,7 +462,6 @@ middleCircle:SetHeight(50)
 middleCircle:SetAnchor("TOP", halfWidth, halfHeight)
 
 switchedToMode("chaos")
-
 
 netRegion2 = Region()
 netRegion2:Handle("OnNetConnect", serviceConnected)
