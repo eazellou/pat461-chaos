@@ -1,5 +1,7 @@
 --basic structure declares two pages with different color backgrounds.
 
+DEBUG_MODE = false
+
 -- Initial Frees
 SetPage(1)
 FreeAllRegions()
@@ -30,7 +32,7 @@ function string:split( inSplitPattern, outResults )
 end
 
 function newDPrint(message)
-    if not displayApp then
+    if not displayApp and DEBUG_MODE then
         DPrint(message)
     end
 end
