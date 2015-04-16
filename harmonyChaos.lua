@@ -237,6 +237,10 @@ function chaosMovement(region, x, y, z)
 end
 
 function displayAppChange()
+    if firstPlayer then
+        return
+    end
+
     if not displayApp then
         DPrint("")
     end
@@ -267,6 +271,10 @@ function displayAppChange()
 end
 
 function firstPlayerChange()
+    if displayApp then
+        return
+    end
+
     firstPlayer = not firstPlayer
 
     if firstPlayer then
