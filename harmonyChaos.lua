@@ -160,7 +160,7 @@ function shrinkme(self, elapsed)
         self:SetHeight(0)
         self:Handle("OnUpdate", nil)
         dad = self:Parent()
-        dad:EnableInput(true)
+        dad:EnableInput(not displayApp)
         dad:Handle("OnTouchDown",timerShrink)
     else
         self:SetWidth(width)
